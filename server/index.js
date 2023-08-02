@@ -56,30 +56,34 @@ async function makeCall(user) {
   } catch (error) {
     console.log(error);
   }
-  
+
   return response;
 }
 
 //Serve a Main Page
 app.get("/", function (req, res) {
-    res.send("Node Websocket");
+  res.send("Node Websocket");
 });
 
-app.get("/call-status", (req, res) => {
-  const call_uuid = req.query.call_uuid;
-  // var response = vonage.voice.getCall(call_uuid)
-  //   .then(resp => console.log(resp))
-  //   .catch(err => console.error(err));
-  // return res.status(200).json({ response: response, message: 'testing if call status is working' });
+app.post("/call-status", async (req, res) => {
+  const call_uuid = req.body.call;
+  const response = await vonage.voice.getCall(call_uuid)
+    .then((resp) => {
+      console.log(resp)
+      return res.status(200).json({ response: resp, status:200 });
+    })
+    .catch((err) => {
+      return res.status(201).json({ response: err, status:201 });
+    });
+    // return res.status(200).json({});
 });
 
-app.post("/call", (req, res) => {
-  let call_data = req.body;
-  var response = makeCall({ name: 'Evans Koech', phone: 254727143163, email: 'biwottech@gmail.com' }); // replace call data here
-
-  console.log(response);
-  return res.status(200).json({ user: response, message: 'call_instantiated' });
+app.post("/call", async (req, res) => {
+  let call_data = req.params;
+  var response = await makeCall({ name: 'Evans Koech', phone: 254727143163, email: 'biwottech@gmail.com' }); // replace call data here
+  return res.status(200).json({ call: response, message: 'call_instantiated' });
 });
+
 
 const record_event_logs = (event) => {
   // console.log(event)
@@ -116,7 +120,6 @@ app
         // console.log(msg);
       }
     });
-
     ws.on("close", function () {
       // console.log("Websocket Closed");
       // record user conversation // end the call
