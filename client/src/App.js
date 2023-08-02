@@ -20,18 +20,17 @@ function App() {
       const sheet = workbook.Sheets[sheetName];
       const data = XLSX.utils.sheet_to_json(sheet);
       setExceldata(data); // display data
-      makeCalls();
+      makeCalls(data);
     }
   };
 
   async function getCallStatus(call_uuid) {
     // hit call status endpoint
-    const response = await axios.get("/call-status", {
+    const response = await axios.get("http://localhost:5000/call-status", {
       params: {
         call_uuid,
       },
     });
-
     return response.data;
   }
 
@@ -39,22 +38,25 @@ function App() {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async function makeCalls() {
+  async function makeCalls(data) {
     // we want to call each of the records in the excel sheet
     // but we want to wait for each call to finish before we call the next one
-    for (let record of excelData) {
+    for (let record of data) {
       // call the record
       // wait for it to finish
       // then make the next call
-      await axios.post("/call", record);
-      let callStatus = await getCallStatus(record.call_uuid);
+      var response = await axios.post("http://localhost:5000/call", {record});
+      console.log(response.data);
+      let callStatus = await getCallStatus(response.data);
       while (callStatus.status !== "completed") {
         // wait for 3 seconds
         await sleep(3000);
-        callStatus = await getCallStatus(record.call_uuid);
+        callStatus = await getCallStatus(response.data);
       }
     }
   }
+
+
 
   // onchange event
   const handleFile = (e) => {

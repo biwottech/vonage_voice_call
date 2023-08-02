@@ -35,95 +35,54 @@ const vonage = new Vonage(
 // initiate the call
 async function makeCall(user) {
   let to = user.phone;
-  return vonage.voice.createOutboundCall(
-    {
-      to: [{ type: "phone", number: to }],
-      from: { type: "phone", number: VONAGE_NUMBER },
-      answer_url: [ANSWER_URL],
-      event_url: [EVENT_URL],
-    },
-    (err, response) => {
-      if (err) {
-        console.error("Error making outbound call:", err);
-      } else {
-        console.log("Outbound call response:", response);
+  var response;
+  try {
+    response = await vonage.voice.createOutboundCall(
+      {
+        to: [{ type: "phone", number: to }],
+        from: { type: "phone", number: VONAGE_NUMBER },
+        answer_url: [ANSWER_URL],
+        event_url: [EVENT_URL],
+      },
+      (err, response) => {
+        console.log(response);
+        if (err) {
+          console.error("Error making outbound call:", err);
+        } else {
+          console.log("Outbound call response:", response);
+        }
       }
-    }
-  );
+    );
+  } catch (error) {
+    console.log(error);
+  }
+  
+  return response;
 }
 
 //Serve a Main Page
-// app.get("/", function (req, res) {
-//     res.send("Node Websocket");
-// });
-
-const saveAccountData = (data) => {
-  const stringifyData = JSON.stringify(data);
-  fs.writeFileSync(dataPath, stringifyData);
-};
-const getAccountData = () => {
-  const jsonData = fs.readFileSync(dataPath);
-  return JSON.parse(jsonData);
-};
-
-const callStatuses = {};
+app.get("/", function (req, res) {
+    res.send("Node Websocket");
+});
 
 app.get("/call-status", (req, res) => {
   const call_uuid = req.query.call_uuid;
-  const status = callStatuses[call_uuid];
-  res.status(200).send(status);
+  // var response = vonage.voice.getCall(call_uuid)
+  //   .then(resp => console.log(resp))
+  //   .catch(err => console.error(err));
+  // return res.status(200).json({ response: response, message: 'testing if call status is working' });
 });
 
-app.post("call", (req, res) => {
-  // call the number
-  // then save the call status
-  // something like this:
-  callStatuses[req.body.call_uuid] = {
-    status: "ringing",
-  };
-});
+app.post("/call", (req, res) => {
+  let call_data = req.body;
+  var response = makeCall({ name: 'Evans Koech', phone: 254727143163, email: 'biwottech@gmail.com' }); // replace call data here
 
-app.get("/", (req, res) => {
-  // let call_data = req.body.params;
-  const call_data = [
-    { name: "Evans Koech", phone: 254727143163, email: "biwottech@gmail.com", status: "" },
-    { name: "Evans Koech", phone: 254727143163, email: "biwottech@gmail.com", status: "" },
-    { name: "Evans Koech", phone: 254727143163, email: "biwottech@gmail.com", status: "" },
-    { name: "Evans Koech", phone: 254727143163, email: "biwottech@gmail.com", status: "" },
-    { name: "Evans Koech", phone: 254727143163, email: "biwottech@gmail.com", status: "" },
-    { name: "Evans Koech", phone: 254727143163, email: "biwottech@gmail.com", status: "" },
-    { name: "Evans Koech", phone: 254727143163, email: "biwottech@gmail.com", status: "" },
-    { name: "Evans Koech", phone: 254727143163, email: "biwottech@gmail.com", status: "" },
-    { name: "Evans Koech", phone: 254727143163, email: "biwottech@gmail.com", status: "" },
-    { name: "Evans Koech", phone: 254727143163, email: "biwottech@gmail.com", status: "" },
-    { name: "Evans Koech", phone: 254727143163, email: "biwottech@gmail.com", status: "" },
-  ];
-
-  call_data.map((call) => {
-    console.log(call);
-    var existAccounts = getAccountData();
-    saveAccountData(existAccounts);
-    let caller_uuid = makeCall(call);
-    existAccounts[caller_uuid] = call;
-    let status = existAccounts[caller_uuid].status;
-
-    if (status == true) {
-      // continue;
-    } else {
-      // break;
-    }
-  });
-  return res.status(200).send("Message delivered");
+  console.log(response);
+  return res.status(200).json({ user: response, message: 'call_instantiated' });
 });
 
 const record_event_logs = (event) => {
-  var existAccounts = getAccountData();
-  fs.readFile(dataPath, "utf8", (err, data) => {
-    const accountId = event.UUID;
-    existAccounts[accountId] = {
-      status: event.status,
-    };
-  });
+  // console.log(event)
 };
 
 app
@@ -148,18 +107,18 @@ app
   .ws("/socket", (ws, req) => {
     // Handle the Websocket
     var rawarray = [];
-    console.log("Websocket Connected");
+    // console.log("Websocket Connected");
     ws.on("message", function (msg) {
       ws.send(msg); // returning the voice message directly to the user  // user can hear his/her voice
       if (isBuffer(msg)) {
         rawarray.push(msg);
       } else {
-        console.log(msg);
+        // console.log(msg);
       }
     });
 
     ws.on("close", function () {
-      console.log("Websocket Closed");
+      // console.log("Websocket Closed");
       // record user conversation // end the call
       const audioFilePath = path.join(__dirname, "recordings", "output.wav");
       file = fs.createWriteStream(audioFilePath);
@@ -213,7 +172,7 @@ app.post("/event", function (req, res) {
 
 // websocket connection
 expressWs.getWss().on("connection", function (ws) {
-  console.log("Websocket connection is open");
+  // console.log("Websocket connection is open");
   // console.log(ws);
 });
 
