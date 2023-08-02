@@ -75,6 +75,7 @@ app.post("/call-status", async (req, res) => {
     .catch((err) => {
       return res.status(201).json({ response: err, status:201 });
     });
+
     // return res.status(200).json({});
 });
 
@@ -94,6 +95,12 @@ app
     //Serve the NCCO on the /ncco answer URL
     // answer event
     let nccoResponse = [
+      {
+        "action": "stream",
+        "streamUrl": [
+            "http://914288e7.ngrok.io/audio/silence.mp3"
+        ]
+    },
       {
         action: "connect",
         from: "NexmoTest",
@@ -145,27 +152,15 @@ app.post("/event", function (req, res) {
   switch (status) {
     case "ringing":
       record_event_logs({ UUID: conversation_uuid, status: "ringing" });
-      callStatuses[conversation_uuid] = {
-        status: "ringing",
-      };
       break;
     case "answered":
       record_event_logs({ UUID: conversation_uuid, status: "answered" });
-      callStatuses[conversation_uuid] = {
-        status: "answered",
-      };
       break;
     case "complete":
       record_event_logs({ UUID: conversation_uuid, status: "complete" });
-      callStatuses[conversation_uuid] = {
-        status: "complete",
-      };
       break;
     case "canceled":
       record_event_logs({ UUID: conversation_uuid, status: "canceled" });
-      callStatuses[conversation_uuid] = {
-        status: "canceled",
-      };
       break;
     default:
       break;
